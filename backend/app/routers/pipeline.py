@@ -5,8 +5,6 @@ from backend.app.db import get_db
 from backend.app.config import settings
 from backend.app.schemas.pipeline import RejectedGameItem, PipelineRunResponse
 from etl.load import RejectedGameModel
-from etl.run_pipeline import run as run_etl_pipeline
-from eda.analysis import run_eda
 
 router = APIRouter(tags=["Pipeline"])
 
@@ -29,9 +27,19 @@ def trigger_pipeline(
     x_api_key: str = Header(None, alias="X-API-Key"),
     source: str = "csv",
 ):
-    if not x_api_key or x_api_key != settings.pipeline_api_key:
+    if not settings.enable_pipeline_run:
+        raise HTTPException(
+            status_code=403,
+            detail="Pipeline execution is disabled in the deployed demo. Run python -m etl.run_pipeline locally."
+        )
+
+    if not settings.pipeline_api_key or not x_api_key or x_api_key != settings.pipeline_api_key:
         raise HTTPException(status_code=403, detail="Invalid or missing X-API-Key header")
+
     try:
+        from etl.run_pipeline import run as run_etl_pipeline
+        from eda.analysis import run_eda
+
         metrics = run_etl_pipeline(source=source)
         run_eda()
         return PipelineRunResponse(status="success", metrics=metrics)

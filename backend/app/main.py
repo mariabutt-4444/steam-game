@@ -11,15 +11,16 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Configure CORS
+# Configure CORS dynamically from comma-separated environment variable
 origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
 if not origins:
     origins = ["*"]
 
+allow_all = "*" in origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if "*" not in origins else ["*"],
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all else origins,
+    allow_credentials=not allow_all,
     allow_methods=["*"],
     allow_headers=["*"],
 )

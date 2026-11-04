@@ -43,7 +43,7 @@ flowchart TD
     end
 
     subgraph Client
-        UI[React 18 + Vite Frontend\nPort 3000 / Nginx]
+        UI[React 18 + Vite Frontend\nPort 3000]
         NB[Jupyter Notebook\nnotebooks/eda.ipynb]
     end
 
@@ -87,9 +87,6 @@ flowchart TD
 4. **Interactive React 18 UI (`frontend/`):**
    - Built with Vite, TypeScript, Tailwind CSS, Lucide icons, and Recharts.
    - Pages: **Dashboard**, **EDA Explorer** (with raw data / chart view and CSV export), **Games Browser** (search, filter, detail drawer), **Pipeline Status**, and **Predictor Placeholder**.
-5. **Full Dockerization:**
-   - Multi-container `docker-compose.yml` (FastAPI backend + Nginx-served static React frontend).
-
 ---
 
 ## Directory Structure
@@ -102,13 +99,12 @@ steam-popularity-predictor/
 │   │   ├── schemas/          # Pydantic API response models
 │   │   ├── services/         # Business logic & query services
 │   │   ├── config.py         # App configuration & settings
-│   │   ├── db.py             # Database session manager
+│   │   ├── db.py             # Database session manager (read-only SQLite)
 │   │   └── main.py           # FastAPI entrypoint & CORS
-│   ├── Dockerfile
-│   └── requirements.txt
+│   └── requirements.txt      # Backend runtime dependencies
 ├── data/
 │   ├── raw/                  # steam.csv & api_cache/
-│   └── steam.db              # SQLite Database
+│   └── steam.db              # Bundled SQLite Database (1,500 games)
 ├── eda/
 │   ├── __init__.py
 │   └── analysis.py           # 9 Statistical Tables & insights engine
@@ -123,10 +119,9 @@ steam-popularity-predictor/
 │   ├── src/
 │   │   ├── components/       # Layout, Header, TableViewer, Modals
 │   │   ├── pages/            # Dashboard, EdaExplorer, GamesBrowser, etc.
-│   │   ├── api.ts            # Typed Axios / fetch client
+│   │   ├── api.ts            # Typed fetch client with VITE_API_URL fallback
 │   │   └── types/            # TypeScript interfaces
-│   ├── Dockerfile
-│   └── nginx.conf
+│   └── vercel.json           # Frontend SPA rewrite rules
 ├── notebooks/
 │   └── eda.ipynb             # Jupyter Notebook for viva presentation
 ├── tests/                    # Pytest test suite (30 test cases)
@@ -135,41 +130,43 @@ steam-popularity-predictor/
 │   ├── test_extract.py       # API client & CSV fallback tests
 │   ├── test_transform.py     # Feature engineering & tier boundary tests
 │   └── test_validate.py      # Pydantic validation & dead-letter tests
-├── docker-compose.yml        # Orchestration for backend & frontend
+├── .python-version           # Pinned Python version (3.12 for Vercel)
+├── index.py                  # Root entrypoint for Vercel Serverless Function
+├── vercel.json               # Backend Vercel config & SQLite bundling
+├── requirements.txt          # Minimal Vercel API runtime dependencies
+├── requirements-dev.txt      # Full dev, ETL, EDA, plotting & test dependencies
 ├── Makefile                  # Developer workflow automation
 └── README.md
 ```
 
 ---
 
-## Quick Start & Setup
+## Quick Start & Local Setup
 
-### Option 1: Native Local Setup
-
-#### Prerequisites
-- Python 3.11+
+### Prerequisites
+- Python 3.11+ (local development supports Python 3.14)
 - Node.js 18+ & npm
 - Git
 
-#### 1. Clone & Set Up Python Environment
+### 1. Set Up Python Virtual Environment
 ```bash
-git clone <repo-url>
-cd steam-popularity-predictor
-
-# Create and activate virtual environment
+# Create virtual environment
 python -m venv .venv
-# On Windows:
+
+# Activate virtual environment
+# Windows:
 .venv\Scripts\activate
-# On Linux/macOS:
+# Linux/macOS:
 source .venv/bin/activate
 
-# Install dependencies
-pip install -r backend/requirements.txt
+# Install all local dev, ETL, EDA, plotting & test dependencies
+pip install -r requirements-dev.txt
 ```
 
-#### 2. Run the ETL Pipeline & Generate EDA Tables
+### 2. Run the ETL Pipeline & EDA Analysis (Optional)
+The repository includes a pre-populated SQLite database (`data/steam.db`) with 1,500 games and 9 computed EDA tables. To re-run locally:
 ```bash
-# Run from CSV fallback (instant benchmarking with 1,500 games):
+# Run ETL from CSV fallback (instant benchmarking with 1,500 games):
 python -m etl.run_pipeline --source csv
 
 # OR run with live API extraction (throttled & cached):
@@ -179,36 +176,25 @@ python -m etl.run_pipeline --source api
 python -m eda.analysis
 ```
 
-#### 3. Run Automated Tests
+### 3. Run Automated Tests
 ```bash
-pytest tests/ -v
+python -m pytest tests/ -v
 ```
 
-#### 4. Launch Backend API
+### 4. Launch Backend API
 ```bash
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
-# API Docs available at http://localhost:8000/docs
+# API Swagger Docs available at http://localhost:8000/docs
+# Health Check available at http://localhost:8000/api/health
 ```
 
-#### 5. Launch Frontend Dashboard
+### 5. Launch Frontend Dashboard
 ```bash
 cd frontend
 npm install
 npm run dev
 # Dashboard available at http://localhost:5173
 ```
-
----
-
-### Option 2: Docker Compose
-
-Run the entire stack with a single command:
-```bash
-docker compose up --build
-```
-- **Web App:** http://localhost:3000
-- **API Swagger Docs:** http://localhost:8000/docs
-- **Health Check:** http://localhost:8000/api/health
 
 ---
 
@@ -261,22 +247,51 @@ The EDA engine precomputes and serves the following 9 tables via `/api/stats`:
 
 ---
 
-## Deployment Guide
+## Deployment Guide (Vercel)
 
-### Deploying to Render / Hugging Face Spaces (Backend)
-1. Fork or push this repository to GitHub.
-2. In [Render](https://render.com), create a new **Web Service** pointing to `backend/Dockerfile`.
-3. Set environment variables:
-   - `DATABASE_URL=sqlite:///data/steam.db`
-   - `PIPELINE_API_KEY=<your-secret-key>`
-4. Add a persistent disk mounted to `/app/data` to preserve the SQLite database.
+The project is structured to deploy seamlessly as **two independent Vercel projects** from the same GitHub repository:
 
-### Deploying to Vercel (Frontend)
-1. In [Vercel](https://vercel.com), create a new project and select the `frontend/` directory as the root.
-2. Framework Preset: **Vite**.
-3. Set Environment Variable:
-   - `VITE_API_URL=https://your-backend-service.onrender.com`
-4. Deploy.
+### Project 1: Backend API (FastAPI)
+1. In the [Vercel Dashboard](https://vercel.com), click **Add New Project** and import this repository.
+2. Configure project settings:
+   - **Framework Preset:** `Other`
+   - **Root Directory:** `.` (leave as repository root)
+3. Set **Environment Variables**:
+   - `CORS_ORIGINS`: Comma-separated list of allowed origins (e.g. `https://your-frontend-project.vercel.app,http://localhost:5173`)
+   - `PIPELINE_API_KEY`: *(Optional)* Secret key required if enabling pipeline runs
+   - `ENABLE_PIPELINE_RUN`: `false` *(Default)*
+4. Click **Deploy**.
+   - Vercel automatically detects [`index.py`](index.py), installs runtime dependencies from [`requirements.txt`](requirements.txt), and bundles `data/steam.db` using [`vercel.json`](vercel.json).
+
+> [!IMPORTANT]
+> **Serverless Storage & Read-Only Limitation:**
+> Vercel Functions execute in a serverless, read-only filesystem environment. The SQLite database (`data/steam.db`) is bundled immutably and opened in read-only mode (`?mode=ro&uri=true`).
+> Consequently, `POST /api/pipeline/run` is intentionally disabled in the deployed demo (returns HTTP 403: *"Pipeline execution is disabled in the deployed demo. Run python -m etl.run_pipeline locally."*).
+> To refresh or update data, run `python -m etl.run_pipeline` locally and commit/push the updated `data/steam.db`.
+
+---
+
+### Project 2: Frontend Dashboard (React + Vite)
+1. In the [Vercel Dashboard](https://vercel.com), click **Add New Project** and import the same repository.
+2. Configure project settings:
+   - **Framework Preset:** `Vite`
+   - **Root Directory:** `frontend`
+3. Set **Environment Variables**:
+   - `VITE_API_URL`: The production URL of your backend Vercel project (e.g. `https://your-backend-api.vercel.app`)
+4. Click **Deploy**.
+   - [`frontend/vercel.json`](frontend/vercel.json) automatically handles single-page application (SPA) routing rewrites.
+
+---
+
+## Environment Variables Reference
+
+| Variable | Scope | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `CORS_ORIGINS` | Backend | `*` | Comma-separated list of allowed origins (e.g., `https://my-ui.vercel.app,http://localhost:5173`) |
+| `PIPELINE_API_KEY` | Backend | `None` | Authorization secret for `POST /api/pipeline/run` (supplied via env var, never hardcoded) |
+| `ENABLE_PIPELINE_RUN` | Backend | `false` | Enable/disable manual ETL pipeline trigger endpoint (`false` in serverless demo) |
+| `DATABASE_URL` | Backend | *(Auto-resolved)* | SQLite URI (resolved relative to `Path(__file__)` and opened in `mode=ro`) |
+| `VITE_API_URL` | Frontend | `http://localhost:8000` | Target backend API base URL consumed by Vite client |
 
 ---
 
@@ -291,4 +306,4 @@ The EDA engine precomputes and serves the following 9 tables via `/api/stats`:
 - [x] **Data Leakage Separation:** Post-launch metrics quarantined from pre-launch features.
 - [x] **Full-Stack Application:** FastAPI REST API backend + responsive React 18 TypeScript frontend.
 - [x] **Stage 2/3 Extensibility:** Predict route registered, UI prediction form built, architecture modularized.
-- [x] **Docker & Tests:** 30 comprehensive pytest tests passing, `docker-compose.yml` configured.
+- [x] **Comprehensive Tests:** 30 comprehensive pytest tests passing across ETL, EDA, and API endpoints.

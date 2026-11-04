@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "functions": {
+    "index.py": {
+      "includeFiles": "data/steam.db"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.py"
+    }
+  ]
+}

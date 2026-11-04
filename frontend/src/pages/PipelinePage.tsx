@@ -15,7 +15,7 @@ import {
 export const PipelinePage: React.FC = () => {
   const [rejectedRows, setRejectedRows] = useState<RejectedGameItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [apiKey, setApiKey] = useState<string>('secret-pipeline-key');
+  const [apiKey, setApiKey] = useState<string>('');
   const [source, setSource] = useState<'csv' | 'api'>('csv');
   const [running, setRunning] = useState<boolean>(false);
   const [runResult, setRunResult] = useState<PipelineRunResponse | null>(null);

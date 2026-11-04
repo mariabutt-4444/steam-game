@@ -3,14 +3,9 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from etl.load import EdaTableModel
 from backend.app.schemas.stats import StatsIndexItem, StatsTableResponse
-from eda.analysis import run_eda
 
 def get_stats_index(db: Session) -> List[StatsIndexItem]:
     tables = db.query(EdaTableModel).all()
-    if not tables:
-        # Generate on demand if empty
-        run_eda()
-        tables = db.query(EdaTableModel).all()
     return [
         StatsIndexItem(
             table_name=t.table_name,
