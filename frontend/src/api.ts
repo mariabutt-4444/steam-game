@@ -8,7 +8,9 @@ import {
   PipelineRunResponse,
 } from './types';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const rawBase = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const normalizedBase = rawBase.replace(/\/+$/, '');
+const API_BASE = normalizedBase.endsWith('/api') ? normalizedBase : `${normalizedBase}/api`;
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, options);

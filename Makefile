@@ -1,4 +1,4 @@
-.PHONY: help install pipeline eda run-backend run-frontend test docker-up docker-down
+.PHONY: help install pipeline eda run-backend run-frontend test
 
 help:
 	@echo "Available commands:"
@@ -9,11 +9,9 @@ help:
 	@echo "  make run-backend    Start FastAPI backend server on :8000"
 	@echo "  make run-frontend   Start Vite React development server on :3000"
 	@echo "  make test           Execute pytest test suite"
-	@echo "  make docker-up      Start containerized stack via Docker Compose"
-	@echo "  make docker-down    Stop and tear down Docker Compose containers"
 
 install:
-	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
 	cd frontend && npm install
 
 pipeline:
@@ -33,9 +31,3 @@ run-frontend:
 
 test:
 	pytest tests/ -v
-
-docker-up:
-	docker compose up --build -d
-
-docker-down:
-	docker compose down
