@@ -17,9 +17,12 @@ API_CACHE_DIR = RAW_DIR / "api_cache"
 CSV_PATH = RAW_DIR / "steam.csv"
 DB_PATH = DATA_DIR / "steam.db"
 
-# Ensure directories exist
-API_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+# Ensure directories exist (skip on read-only filesystems like Vercel)
+try:
+    API_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 # ---------------------------------------------------------------------------
 # Popularity-tier cut-offs  (owners_max boundaries)
