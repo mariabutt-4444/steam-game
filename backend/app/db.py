@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from backend.app.config import settings, DEFAULT_DB_PATH
+from app.config import settings, DEFAULT_DB_PATH
 
 # Resolve database path relative to Path(__file__) and open SQLite read-only
 db_file = DEFAULT_DB_PATH.resolve()

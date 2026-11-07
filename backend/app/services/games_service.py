@@ -2,7 +2,7 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from etl.load import GameModel
-from backend.app.schemas.game import PaginatedGames, GameListItem
+from app.schemas.game import PaginatedGames, GameListItem
 
 def get_games(
     db: Session,

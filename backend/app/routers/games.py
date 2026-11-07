@@ -1,9 +1,9 @@
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from backend.app.db import get_db
-from backend.app.schemas.game import PaginatedGames, GameDetail
-from backend.app.services.games_service import get_games, get_game_by_appid, get_all_genres
+from app.db import get_db
+from app.schemas.game import PaginatedGames, GameDetail
+from app.services.games_service import get_games, get_game_by_appid, get_all_genres
 
 router = APIRouter(prefix="/games", tags=["Games"])
 

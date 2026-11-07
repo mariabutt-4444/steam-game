@@ -1,9 +1,9 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
-from backend.app.db import get_db
-from backend.app.config import settings
-from backend.app.schemas.pipeline import RejectedGameItem, PipelineRunResponse
+from app.db import get_db
+from app.config import settings
+from app.schemas.pipeline import RejectedGameItem, PipelineRunResponse
 from etl.load import RejectedGameModel
 
 router = APIRouter(tags=["Pipeline"])

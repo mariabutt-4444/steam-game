@@ -1,9 +1,9 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.app.db import get_db
-from backend.app.schemas.stats import StatsIndexItem, StatsTableResponse
-from backend.app.services.stats_service import get_stats_index, get_stats_table
+from app.db import get_db
+from app.schemas.stats import StatsIndexItem, StatsTableResponse
+from app.services.stats_service import get_stats_index, get_stats_table
 
 router = APIRouter(prefix="/stats", tags=["Stats & EDA"])
 

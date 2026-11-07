@@ -2,7 +2,7 @@ import json
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from etl.load import EdaTableModel
-from backend.app.schemas.stats import StatsIndexItem, StatsTableResponse
+from app.schemas.stats import StatsIndexItem, StatsTableResponse
 
 def get_stats_index(db: Session) -> List[StatsIndexItem]:
     tables = db.query(EdaTableModel).all()
