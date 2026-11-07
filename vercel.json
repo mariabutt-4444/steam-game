@@ -1,0 +1,13 @@
+{
+    "functions": {
+        "api/index.py": {
+            "includeFiles": "{backend,etl,data}/**"
+        }
+    },
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/api/index"
+        }
+    ]
+}

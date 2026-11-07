@@ -1,0 +1,6 @@
+frontend
+notebooks
+tests
+eda
+.venv
+data/raw
